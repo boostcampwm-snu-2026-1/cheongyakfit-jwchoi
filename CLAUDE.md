@@ -33,6 +33,7 @@
 | 청약 규칙·기준표·용어 (SSoT) | [docs/domain/](docs/domain/README.md) |
 | UI/UX | [docs/design.md](docs/design.md) |
 | 결정 근거 ("왜") | [docs/decisions.md](docs/decisions.md) |
+| Git 전략·브랜치·PR·이슈 | [docs/git.md](docs/git.md) |
 
 ## 빌드/테스트 (pnpm)
 

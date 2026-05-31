@@ -27,4 +27,5 @@ Next.js (App Router) · Supabase (Postgres/Auth/Storage) · OpenAI (PDF 파싱) 
 | [docs/design.md](docs/design.md)             | UI/UX 디자인 (작성 전)                                     |
 | [docs/domain/](docs/domain/README.md)        | 청약 도메인 규칙·기준표 (SSoT, 작성 중) — 배경/자격/자금   |
 | [docs/decisions.md](docs/decisions.md)       | 결정 기록 — "왜 그렇게 정했나"                             |
+| [docs/git.md](docs/git.md)                   | Git 전략 — 브랜치·커밋·PR·이슈 운영 규칙                   |
 | [CLAUDE.md](CLAUDE.md)                       | AI 에이전트용 컨텍스트                                     |

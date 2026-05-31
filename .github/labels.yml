@@ -1,0 +1,42 @@
+# 라벨 정의 (참조용 SSoT) — docs/git.md §6
+#
+# 이 파일은 라벨의 진실 출처(이름·색·설명)다. 저장소 셋업 시 GitHub UI 또는
+# `gh label create` 로 한 번 만든다. (자동 동기화 액션은 도입하지 않음 — 범위 밖)
+#
+# 예) gh label create "type: feat" --color 1D76DB --description "기능 추가·변경"
+
+# ── 유형 (커밋·브랜치·이슈 유형과 일치) ──
+- name: "type: feat"
+  color: "1D76DB"
+  description: "기능 추가·변경"
+- name: "type: bug"
+  color: "D73A4A"
+  description: "버그 수정"
+- name: "type: chore"
+  color: "CFD3D7"
+  description: "빌드·설정·의존성·문서 등 잡일"
+
+# ── 중요도 (MoSCoW) — scope.md §0 ──
+- name: "priority: must"
+  color: "B60205"
+  description: "없으면 MVP가 성립 안 됨"
+- name: "priority: should"
+  color: "FBCA04"
+  description: "중요하지만 없어도 출시 가능"
+- name: "priority: could"
+  color: "0E8A16"
+  description: "있으면 좋은 것 (nice-to-have)"
+
+# ── 영역 (3층 아키텍처) — architecture.md ──
+- name: "area: core"
+  color: "5319E7"
+  description: "lib/core — 순수 함수 (matching·finance·rules)"
+- name: "area: server"
+  color: "006B75"
+  description: "lib/server — 부수효과 (parsing·db·storage·auth)"
+- name: "area: ui"
+  color: "C2E0C6"
+  description: "app — 화면"
+- name: "area: domain"
+  color: "BFD4F2"
+  description: "docs/domain — 청약 규칙·기준표 (SSoT)"

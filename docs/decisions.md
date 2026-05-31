@@ -55,3 +55,6 @@ Prisma는 관리자 커넥션으로 붙어 **RLS를 우회**함 → P1 MUST인 "
 
 ### D12. 프로필 폼 전부 P1
 프로필 필드는 전부 매칭 엔진의 입력이라 "매칭 필요분만 먼저" 같은 분리가 의미 없음. 폼 전체를 P1에 둠. 재방문 시 열람·수정이 필요하므로 전용 프로필 페이지(`/profile`)로 구현.
+
+### D14. Git 전략: main(release)/dev/작업 브랜치 + 항상 PR·Squash, 이슈=Milestone(Phase)+Label
+상세는 [git.md](./git.md). 작업 브랜치는 `dev`에서 분기하고 이름은 `유형/이슈번호-설명`. feat→dev, dev→main 모두 **Squash and Merge**(Squash 커밋 메시지=PR 제목, conventional). task는 GitHub Issue로 관리 — **Milestone=Phase**, **Label=유형(feat/bug/chore)+중요도(MoSCoW)+영역(3층)**. 강제 휴먼 리뷰 대신 셀프리뷰 체크리스트(CLAUDE.md 비협상 규칙 반영)+CI(lint·typecheck·test)를 게이트로. 이슈/PR 템플릿·라벨 정의는 `.github/`.
