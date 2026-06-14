@@ -2,7 +2,7 @@
 
 청약핏의 **도메인 사전지식 + 판정 규칙 + 기준표**를 담는 폴더. 이 폴더가 **SSoT(단일 진실원천)** 이며, 코드(`lib/core/rules/`)는 항상 이 문서를 반영한다.
 
-> 🚧 **대부분 미작성** — 아래 "채우는 법"을 따라 작성한다. 이 작업이 [scope.md](../scope.md)의 P1 선행 조건이다. 신혼부부 특공부터 시작.
+> ✅ **P1 선행 조건 완료** — 자격 룰 6종·기준표 3종([eligibility.md](./eligibility.md)), 프로필·공고 필드 확정표([architecture.md §7·§8](../architecture.md)), 검증 fixture([example.md](./example.md)) 작성됨. 다음: 값의 DB rule 시드(Phase 2) + 용어집([overview.md §3](./overview.md), 미작성).
 
 ## 파일 구성
 
@@ -10,6 +10,7 @@
 |------|------|
 | [overview.md](./overview.md) | 배경 지식, 공고 변수 vs 법령 고정 구분, 용어집 |
 | [eligibility.md](./eligibility.md) | **자격** — 청약유형 6종 판정 룰 + 소득/가점/예치금 기준표 + 서류 매핑 |
+| [example.md](./example.md) | 룰 검증 fixture — 대표 공고 × 프로필 → 손 판정(6종, Phase 2 TDD 기대값 시드) |
 
 ## SSoT 규율
 
@@ -39,7 +40,7 @@
 
 ### 완료 기준
 
-- [ ] 6개 청약유형 각각의 판정 조건이 법령 근거와 함께 표로 정리됨.
-- [ ] 소득/가점/예치금 기준표가 출처·기준연도와 함께 값으로 채워짐.
-- [ ] 프로필 필드 확정표(자격용) / 공고 추출 필드 확정표가 완성됨.
-- [ ] 대표 공고 1건을 위 정의에 손으로 대입해 "사람이 한 자격 판정"이 한 번 나옴 (룰 검증용 fixture 시드).
+- [x] 6개 청약유형 각각의 판정 조건이 법령 근거와 함께 표로 정리됨. → [eligibility.md §1](./eligibility.md)
+- [x] 소득/가점/예치금 기준표가 출처·기준연도와 함께 값으로 채워짐. → [eligibility.md §2](./eligibility.md)
+- [x] 프로필 필드 확정표(자격용) / 공고 추출 필드 확정표가 완성됨. → [architecture.md §7·§8](../architecture.md)
+- [x] 대표 공고 1건을 위 정의에 손으로 대입해 "사람이 한 자격 판정"이 한 번 나옴 (룰 검증용 fixture 시드). → [example.md](./example.md)

@@ -123,17 +123,107 @@ supabase/         # 마이그레이션 + seed (rule 테이블 값 시드 포함 
 
 ## 7. 사용자 정보 스키마 (profiles)
 
-> 🚧 **미정** — 정확한 필드·타입·검증규칙은 Phase 1의 룰/필드 사전 정의에서 **룰로부터 역산해 확정**한다. ([domain/README.md 채우는 법](./domain/README.md))
-> 단계형 입력 폼으로 수집한다. 대략의 수집 범위(확정 전):
-> - **자격용**: 기본/세대, 혼인/자녀, 소득, 청약통장, 주택/이력
+> 자격 룰([domain/eligibility.md](./domain/eligibility.md))의 "읽는 입력값"에서 **역산한 프로필 필드 확정표**. 단계형 입력 폼으로 수집. zod 검증 스키마는 `lib/schemas/`에서 구현(이슈 #3). 민감정보(생년월일·소득)는 RLS 보호(§6).
+> **원칙**: 사용자는 *원천 사실*만 입력한다. 무주택기간·미성년자녀수·가구원수 등 **파생값은 저장하지 않고 CORE가 계산**한다(stale 방지·순수성). 아래 "파생" 표시 항목은 입력 필드가 아니라 산출물.
+
+### 7.1 기본·세대
+
+| 필드 | 타입 | 비고 | 쓰는 룰 |
+|------|------|------|--------|
+| `birthDate` | date | 만30세 도달일 — 무주택기간·연령 | 일반(가점), 노부모, 다자녀 |
+| `isHouseholdHead` | boolean | 세대주 여부 | 노부모(필수), 규제지역 일반 1순위 |
+| `residenceSido` | enum(시·도) | 예치금 지역기준 + 해당지역 거주자 우선 | 일반(예치금), 전 특공 |
+| `residenceSince` | date | 해당 시·도 거주 시작일 → 거주기간(파생) | 다자녀 배점, 우선공급 |
+
+### 7.2 세대 구성원 — `household[]` (배열)
+
+| 필드 | 타입 | 비고 |
+|------|------|------|
+| `relation` | enum(배우자/직계존속/직계비속/기타) | 부양가족·노부모·세대무주택 판정 |
+| `birthDate` | date | 직계존속 만65세·직계비속 미성년/영유아 판정 |
+| `isMarried` | boolean | 직계비속은 **미혼**만 부양가족 산입 |
+| `ownsHouse` | boolean | 세대 무주택 판정 |
+| `coResidentSince` | date | 동일 등본 등재일 — 직계존속 3년 부양·3년 등재 |
+
+→ 파생: **부양가족수**(가점), **세대 무주택 여부**, **노부모 3년 부양 충족**.
+
+### 7.3 혼인·자녀
+
+| 필드 | 타입 | 비고 | 쓰는 룰 |
+|------|------|------|--------|
+| `maritalStatus` | enum(미혼/기혼) | 1인가구 판정 포함 | 신혼·생애최초 |
+| `marriageDate` | date \| null | 혼인신고일 — 혼인 7년·무주택기간 기산 | 신혼(7년), 일반(가점) |
+| `isDualIncome` | boolean | 맞벌이 → 소득기준 % 분기 | 신혼·신생아 소득 |
+| `children[]` | 배열 | 각: `{ status: 출생\|임신\|입양, birthDate? }` | 다자녀·신혼·신생아·생애최초 |
+
+→ 파생: **미성년 자녀수·영유아(만6세 미만)수·2세 미만 여부**(임신·입양 포함).
+
+### 7.4 소득·자산
+
+| 필드 | 타입 | 비고 | 쓰는 룰 |
+|------|------|------|--------|
+| `householdSize` | int | 가구원수 — 소득표 행 선택 | 전 특공 소득 |
+| `applicantIncome` | int(원/월) | 본인 월소득 | 소득 판정 |
+| `spouseIncome` | int(원/월) \| null | 배우자 월소득(맞벌이) | 소득 판정 |
+| `realEstateAsset` | int(원) \| null | 부동산 가액 — 소득초과 시 자산기준 대체 | 신혼·생애최초·신생아 |
+| `incomeTaxPaidYears` | int \| null | 소득세 납부 연수 | 생애최초(5년) |
+
+### 7.5 청약통장
+
+| 필드 | 타입 | 비고 | 쓰는 룰 |
+|------|------|------|--------|
+| `hasAccount` | boolean | 주택청약종합저축 보유 | 전 유형 |
+| `accountOpenDate` | date \| null | 순위기산일 — 가입기간·1순위 | 1순위·가점(통장) |
+| `depositAmount` | int(원) | 예치금 | 예치금 충족 |
+
+### 7.6 주택·이력
+
+| 필드 | 타입 | 비고 | 쓰는 룰 |
+|------|------|------|--------|
+| `homelessSince` | date \| null | 무주택 시작일 → 무주택기간(파생) | 일반(가점), 다자녀 |
+| `everOwnedHome` | boolean | 생애 주택소유 이력 유무 | 생애최초(전무 요건) |
+| `pastWin` | `{ date, regulated }` \| null | 과거 당첨 이력 | 재당첨 제한(규제지역 5년) |
+| `usedSpecialSupply` | boolean | 특공 당첨 이력(세대 1회) | 전 특공 |
+
+> 무주택기간(가점 §2.2)은 `homelessSince`·`birthDate`·`marriageDate`에서 CORE가 산정(만30세 또는 혼인신고일 중 늦은 날 기준).
 
 ---
 
 ## 8. 공고 추출 스키마 (notices — PDF에서 뽑는 "변수")
 
-> 🚧 **미정** — 추출할 정확한 필드·타입·enum은 Phase 1의 룰/필드 사전 정의에서 확정한다. ([domain/README.md 채우는 법](./domain/README.md))
-> 공고마다 달라지는 "변수"만 뽑는다(소득요건 등 법령 고정값은 추출하지 않음 → [domain/overview.md §2](./domain/overview.md)). 가변 구조는 JSONB(§6).
-> 주요 추출 대상: 분양가상한제·규제지역 여부, 청약 가능 지역, 평형(전용면적)·공급유형/세대수, 전매제한·실거주의무, 일정(접수·발표·계약), 평형별 분양가·세대수(요약 표시용).
+> 공고마다 달라지는 **변수만** 추출(소득요건 등 법령 고정값은 추출하지 않음 → [domain/overview.md §2](./domain/overview.md)). 가변 구조는 JSONB(§6). zod 추출 스키마는 `lib/schemas/`에서 구현(이슈 #3), 채우는 파싱은 Phase 2.
+
+### 8.1 공고 메타
+
+| 필드 | 타입 | 비고 | 쓰는 룰 |
+|------|------|------|--------|
+| `announcementDate` | date | 모집공고일 — 혼인7년·연령·무주택기간·자녀나이 기준일 | 거의 전 유형(기준일) |
+| `regulationZone` | enum(투기과열지구/조정대상지역/비규제) | 가점·추첨 비율, 1순위 통장기간·세대주, 재당첨 | 일반, 1순위, 재당첨 |
+| `priceCapApplied` | boolean | 분양가상한제 — 전매·실거주(주의사항) 결정 | 주의사항 |
+| `eligibleRegions` | text | 청약 가능 지역(해당 시·도 우선·인근 포함 여부) | 1순위 지역요건·거주자 우선 |
+
+### 8.2 주택형 — `unitTypes[]` (JSONB 배열)
+
+| 필드 | 타입 | 비고 | 쓰는 룰 |
+|------|------|------|--------|
+| `exclusiveArea` | number(㎡) | 가점/추첨 비율·예치금 구간·신혼85㎡이하 등 | 일반 비율, 예치금, 신혼 |
+| `price` | int(원) | 평형별 분양가 — 요약 표시용 | (표시용) |
+| `supply` | object | 공급유형별 세대수: `{ general_gajeom, general_chucheom, sinhon, saengae, dajanyeo, nobumo, sinsaeng }` | 유형 존재 여부·물량 |
+
+> 어떤 청약유형이 이 공고에 **열려 있는지**는 `supply`의 세대수 > 0 으로 판정(세대수 0이면 해당 유형 "불가능").
+
+### 8.3 일정·주의사항
+
+| 필드 | 타입 | 비고 |
+|------|------|------|
+| `receiptPeriod` | daterange | 접수기간(특공/1·2순위) |
+| `winnerAnnounceDate` | date | 당첨자 발표일 |
+| `contractPeriod` | daterange | 계약기간 |
+| `moveInDate` | date(예정) | 입주예정일 |
+| `resaleRestrictionMonths` | int \| null | 전매제한 — 주의사항(규제·분상제에서 파생 가능) |
+| `residenceObligationMonths` | int \| null | 실거주의무 — 주의사항 |
+
+> 전매제한·실거주의무는 자격 판정에 직접 쓰이지 않지만 결과 화면 **주의사항**으로 강조(scope P3).
 
 ---
 
@@ -145,7 +235,8 @@ CORE에는 순수 함수 매칭 엔진이 산다. `rules`(기준표)를 **인자
 - 청약유형마다 규칙 함수 하나:
   `evaluate(profile, notice, rules) → { status: 가능 | 불가능 | 확인필요, reasons[], requiredDocuments[] }`
 
-> 🚧 **미정** — 유형별 판정 로직·가점 점수표·읽는 필드는 **Phase 1 룰/필드 사전 정의**에서 확정([docs/domain/eligibility.md](./domain/eligibility.md)).
+- 입력: `profile`(§7), `notice`(§8), `rules`(DB에서 로드한 기준표 — 소득/가점/예치금, [eligibility.md §2](./domain/eligibility.md)).
+- 유형별 판정 조건·읽는 필드는 [eligibility.md §1](./domain/eligibility.md)에 확정됨. **판정 로직(순수 함수) 구현은 Phase 2**(TDD — §11).
 
 ---
 
