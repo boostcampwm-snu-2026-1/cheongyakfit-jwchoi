@@ -145,6 +145,30 @@ export type Database = {
         }
         Relationships: []
       }
+      rules: {
+        Row: {
+          created_at: string
+          effective_year: number
+          kind: string
+          payload: Json
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          effective_year: number
+          kind: string
+          payload: Json
+          source: string
+        }
+        Update: {
+          created_at?: string
+          effective_year?: number
+          kind?: string
+          payload?: Json
+          source?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
