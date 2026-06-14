@@ -38,3 +38,4 @@ export const noticeExtractionSchema = z.object({
 });
 
 export type NoticeExtraction = z.infer<typeof noticeExtractionSchema>;
+export type RegulationZone = z.infer<typeof regulationZoneEnum>;
