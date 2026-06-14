@@ -1,0 +1,26 @@
+{
+  "announcementDate": "2026-07-01",
+  "regulationZone": "투기과열지구",
+  "priceCapApplied": true,
+  "eligibleRegions": "서울특별시(해당지역 우선) + 수도권",
+  "unitTypes": [
+    {
+      "exclusiveArea": 59,
+      "price": 980000000,
+      "supply": { "general_gajeom": 8, "general_chucheom": 5, "sinhon": 7, "saengae": 4, "dajanyeo": 2, "nobumo": 1, "sinsaeng": 3 }
+    },
+    {
+      "exclusiveArea": 84,
+      "price": 1350000000,
+      "supply": { "general_gajeom": 12, "general_chucheom": 6, "sinhon": 5, "saengae": 3, "dajanyeo": 2, "nobumo": 1, "sinsaeng": 3 }
+    }
+  ],
+  "schedule": {
+    "receiptPeriod": ["2026-07-14", "2026-07-16"],
+    "winnerAnnounceDate": "2026-07-23",
+    "contractPeriod": ["2026-08-04", "2026-08-06"],
+    "moveInDate": "2028-09-01",
+    "resaleRestrictionMonths": 36,
+    "residenceObligationMonths": 24
+  }
+}
