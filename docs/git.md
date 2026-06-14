@@ -32,9 +32,9 @@
 
 ```
 feat/12-eligibility-engine
-fix/34-dsr-calc-rounding
+fix/34-deposit-table-rounding
 chore/41-vitest-config
-docs/7-domain-finance
+docs/7-domain-eligibility
 ```
 
 | 유형        | 쓰임                                   |
@@ -64,9 +64,9 @@ docs/7-domain-finance
 | 유형      | 예시                                              |
 | --------- | ------------------------------------------------- |
 | `feat`    | `feat: 자격 매칭 엔진 일반공급 룰 추가`            |
-| `fix`     | `fix: DSR 계산 반올림 오류 수정`                  |
+| `fix`     | `fix: 예치금표 반올림 오류 수정`                  |
 | `chore`   | `chore: Supabase 로컬 개발 환경 초기화`           |
-| `docs`    | `docs: 자금 도메인 LTV 기준표 보강`               |
+| `docs`    | `docs: 자격 도메인 예치금 기준표 보강`            |
 | `test`    | `test: 매칭 엔진 신혼부부 fixture 추가`           |
 | `refactor`| `refactor: rules 로더 시그니처 정리`              |
 
@@ -87,7 +87,7 @@ docs/7-domain-finance
 | PR              | 방향        | 제목 예시                              | 비고                                   |
 | --------------- | ----------- | -------------------------------------- | -------------------------------------- |
 | **기능 PR**     | 작업 → `dev`| `feat: 자격 매칭 엔진 (#12)`           | 이슈 1개 = PR 1개 기본. `Closes #12`   |
-| **릴리스 PR**   | `dev` → `main`| `release: Phase 2 매칭·자금 엔진`    | 여러 기능을 묶어 한 번에 `main`으로     |
+| **릴리스 PR**   | `dev` → `main`| `release: Phase 2 매칭 엔진`         | 여러 기능을 묶어 한 번에 `main`으로     |
 
 **핫픽스** (운영 중 긴급 수정):
 

@@ -1,6 +1,6 @@
-# [A] 자격 판정 규칙
+# 자격 판정 규칙
 
-청약유형별 판정 룰 + 자격 기준표(소득/가점/예치금) + 서류 매핑. 매칭 엔진(`lib/core/matching/`)이 이 문서를 반영한다. (배경·용어는 [overview.md](./overview.md), 자금은 [finance.md](./finance.md))
+청약유형별 판정 룰 + 자격 기준표(소득/가점/예치금) + 서류 매핑. 매칭 엔진(`lib/core/matching/`)이 이 문서를 반영한다. (배경·용어는 [overview.md](./overview.md))
 
 ## 1. 청약유형별 판정 룰
 
