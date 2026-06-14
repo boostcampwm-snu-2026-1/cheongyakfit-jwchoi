@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/server/auth/session";
 import { listNotices } from "@/lib/server/storage/notices";
 import UploadForm from "./upload-form";
+import { NoticeActions } from "./notice-actions";
 
 const STATUS_LABEL: Record<string, string> = {
   uploaded: "업로드됨",
@@ -25,8 +26,8 @@ export default async function NoticesPage() {
     <main className="mx-auto w-full max-w-2xl p-6">
       <h1 className="mb-1 text-xl font-semibold">내 공고</h1>
       <p className="mb-6 text-sm text-zinc-600">
-        분석할 공고 PDF를 업로드하세요. 자격 판정·자동 분석은 다음 단계에서
-        제공됩니다.
+        분석할 공고 PDF를 업로드한 뒤 &quot;분석하기&quot;를 누르면 공고를 파싱해
+        청약유형별 자격을 판정합니다.
       </p>
 
       <UploadForm />
@@ -49,6 +50,7 @@ export default async function NoticesPage() {
                     {STATUS_LABEL[n.status] ?? n.status}
                   </span>
                   <span>{formatDate(n.created_at)}</span>
+                  <NoticeActions id={n.id} status={n.status} />
                 </span>
               </li>
             ))}
