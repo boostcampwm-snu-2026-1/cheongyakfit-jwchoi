@@ -16,6 +16,9 @@ export interface Derived {
 }
 
 export function derive(p: Profile, ref: string): Derived {
+  // 본인 무주택 = 보유 이력 없음(평생) 또는 처분일(homelessSince) 있음.
+  // homelessSince==null은 "평생 무주택"과 "현재 보유 중" 둘 다를 뜻하므로 everOwnedHome로 구분한다.
+  const selfHomeless = !p.everOwnedHome || p.homelessSince != null;
   // 무주택기간 시작 = 만30세 도달일·혼인신고일·무주택시작일 중 가장 늦은 날(eligibility §2.2)
   const homelessStart = maxIso(addYears(p.birthDate, 30), p.marriageDate, p.homelessSince);
   // 임신/입양(생일 없음)=0세 취급
@@ -32,14 +35,14 @@ export function derive(p: Profile, ref: string): Derived {
     p.household.filter((m) => m.relation === "직계비속" && !m.isMarried).length;
   return {
     age: fullYearsBetween(p.birthDate, ref),
-    homelessMonths: p.homelessSince ? fullMonthsBetween(homelessStart, ref) : 0,
+    homelessMonths: selfHomeless ? Math.max(0, fullMonthsBetween(homelessStart, ref)) : 0,
     dependents,
     accountMonths: p.accountOpenDate ? fullMonthsBetween(p.accountOpenDate, ref) : 0,
     residenceMonths: p.residenceSince ? fullMonthsBetween(p.residenceSince, ref) : 0,
     minorChildren: p.children.filter((c) => childAge(c) < 19).length,
     infants: p.children.filter((c) => childAge(c) < 6).length,
     hasUnder2: p.children.some((c) => childAge(c) < 2),
-    householdHomeless: p.homelessSince != null && p.household.every((m) => !m.ownsHouse),
+    householdHomeless: selfHomeless && p.household.every((m) => !m.ownsHouse),
     grossIncome: p.applicantIncome + (p.isDualIncome ? (p.spouseIncome ?? 0) : 0),
   };
 }
