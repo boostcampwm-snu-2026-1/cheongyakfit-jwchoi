@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import UploadFlow from "./upload-flow";
 import { NoticeActions } from "./notice-actions";
+import { DeleteNoticeButton } from "./delete-notice-button";
 
 type Notice = {
   id: string;
@@ -118,8 +119,12 @@ export default function NoticesTabs({ notices }: { notices: Notice[] }) {
                   />
                   {meta.label}
                 </Badge>
-                <div className="shrink-0">
+                <div className="flex shrink-0 items-center gap-1">
                   <NoticeActions id={n.id} status={n.status} />
+                  <DeleteNoticeButton
+                    noticeId={n.id}
+                    filename={n.original_filename}
+                  />
                 </div>
               </li>
             );
