@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { z } from "zod";
 import { profileSchema } from "./profile";
 
 const valid = {
@@ -30,5 +31,39 @@ describe("profileSchema", () => {
   it("파생값(무주택기간 등)은 스키마에 없다 — 추가 키는 strip", () => {
     const parsed = profileSchema.parse({ ...valid, homelessYears: 9 } as Record<string, unknown>);
     expect("homelessYears" in parsed).toBe(false);
+  });
+  it("체크 안 한 체크박스/비운 선택 필드(undefined)는 false·null로 채워진다", () => {
+    // 폼은 안 건드린 체크박스·선택 필드를 undefined로 둔다. 필수값만 채워 보낸다.
+    const minimal = {
+      birthDate: "1992-03-01",
+      residenceSido: "서울특별시",
+      maritalStatus: "미혼",
+      householdSize: 1,
+      applicantIncome: 3_000_000,
+      depositAmount: 0,
+    };
+    const parsed = profileSchema.safeParse(minimal);
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.isHouseholdHead).toBe(false);
+    expect(parsed.data.isDualIncome).toBe(false);
+    expect(parsed.data.hasAccount).toBe(false);
+    expect(parsed.data.everOwnedHome).toBe(false);
+    expect(parsed.data.usedSpecialSupply).toBe(false);
+    expect(parsed.data.residenceSince).toBeNull();
+    expect(parsed.data.spouseIncome).toBeNull();
+    expect(parsed.data.realEstateAsset).toBeNull();
+    expect(parsed.data.pastWin).toBeNull();
+    expect(parsed.data.household).toEqual([]);
+    expect(parsed.data.children).toEqual([]);
+  });
+  it("필수값 누락은 해당 필드 에러로 거른다", () => {
+    const r = profileSchema.safeParse({ residenceSido: "서울특별시" });
+    expect(r.success).toBe(false);
+    if (r.success) return;
+    const keys = Object.keys(z.flattenError(r.error).fieldErrors);
+    expect(keys).toContain("birthDate");
+    expect(keys).toContain("householdSize");
+    expect(keys).toContain("applicantIncome");
   });
 });
