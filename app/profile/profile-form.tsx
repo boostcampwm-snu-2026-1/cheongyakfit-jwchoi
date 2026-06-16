@@ -72,12 +72,14 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
     initial ?? { household: [], children: [] },
   );
   const [errors, setErrors] = useState<Record<string, string[]> | undefined>();
+  const [message, setMessage] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const household = state.household ?? [];
   const children = state.children ?? [];
   const pastWin = state.pastWin ?? null;
+  const isMarried = state.maritalStatus === "기혼";
 
   const set = (patch: Partial<Profile>) =>
     setState((p) => ({ ...p, ...patch }));
@@ -97,20 +99,49 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
   const setChild = (i: number, patch: Partial<Child>) =>
     set({ children: children.map((c, idx) => (idx === i ? { ...c, ...patch } : c)) });
   const addChild = () =>
-    set({ children: [...children, { status: "출생", birthDate: "" }] });
+    set({ children: [...children, { status: "출생", birthDate: null }] });
   const removeChild = (i: number) =>
     set({ children: children.filter((_, idx) => idx !== i) });
+
+  // 화면에서 숨긴(=해당 없는) 칸의 값은 저장하지 않는다.
+  // depositAmount는 필수라 통장 없으면 0으로 고정해 검증을 통과시킨다.
+  const buildPayload = (): Partial<Profile> => {
+    const p: Partial<Profile> = { ...state };
+    if (state.maritalStatus !== "기혼") {
+      p.marriageDate = null;
+      p.isDualIncome = false;
+      p.spouseIncome = null;
+      p.children = [];
+    }
+    if (!state.hasAccount) {
+      p.accountOpenDate = null;
+      p.depositAmount = 0;
+    }
+    if (!state.everOwnedHome) p.homelessSince = null;
+    return p;
+  };
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSaved(false);
+    setMessage(null);
     startTransition(async () => {
-      const res = await saveProfile(state);
-      if (res.ok) {
+      try {
+        const res = await saveProfile(buildPayload());
+        if (res.ok) {
+          setErrors(undefined);
+          setMessage(null);
+          setSaved(true);
+        } else if (res.errors) {
+          setErrors(res.errors);
+          setMessage("입력값을 확인해주세요.");
+        } else {
+          setErrors(undefined);
+          setMessage(res.message ?? "저장에 실패했습니다.");
+        }
+      } catch {
         setErrors(undefined);
-        setSaved(true);
-      } else {
-        setErrors(res.errors);
+        setMessage("저장에 실패했습니다. 네트워크 상태를 확인하고 다시 시도해주세요.");
       }
     });
   };
@@ -227,6 +258,11 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
             </Field>
           </div>
         ))}
+        {errors?.household && (
+          <p className="text-xs text-red-600">
+            세대원 정보를 확인해주세요. 생년월일은 모두 입력해야 합니다.
+          </p>
+        )}
       </section>
 
       <section className="flex flex-col gap-3">
@@ -249,62 +285,71 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
             ))}
           </select>
         </Field>
-        <Field label="혼인신고일" error={errors?.marriageDate}>
-          <input
-            type="date"
-            className={inputCls}
-            value={state.marriageDate ?? ""}
-            onChange={(e) => set({ marriageDate: dateOrNull(e.target.value) })}
-          />
-        </Field>
-        <Check
-          label="맞벌이입니까?"
-          checked={!!state.isDualIncome}
-          onChange={(v) => set({ isDualIncome: v })}
-        />
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">자녀</span>
-          <button type="button" className="text-sm text-blue-600" onClick={addChild}>
-            + 자녀 추가
-          </button>
-        </div>
-        {children.length === 0 && (
-          <p className="text-sm text-zinc-500">등록된 자녀가 없습니다.</p>
-        )}
-        {children.map((c, i) => (
-          <div key={i} className="flex items-end gap-2 rounded border p-3">
-            <Field label="구분">
-              <select
-                className={inputCls}
-                value={c.status}
-                onChange={(e) =>
-                  setChild(i, { status: e.target.value as Child["status"] })
-                }
-              >
-                {childStatusEnum.options.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="생년월일 (임신은 비움)">
+        {isMarried && (
+          <>
+            <Field label="혼인신고일" error={errors?.marriageDate}>
               <input
                 type="date"
                 className={inputCls}
-                value={c.birthDate ?? ""}
-                onChange={(e) => setChild(i, { birthDate: dateOrNull(e.target.value) })}
+                value={state.marriageDate ?? ""}
+                onChange={(e) => set({ marriageDate: dateOrNull(e.target.value) })}
               />
             </Field>
-            <button
-              type="button"
-              className="pb-1 text-sm text-red-600"
-              onClick={() => removeChild(i)}
-            >
-              삭제
-            </button>
-          </div>
-        ))}
+            <Check
+              label="맞벌이입니까?"
+              checked={!!state.isDualIncome}
+              onChange={(v) => set({ isDualIncome: v })}
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">자녀</span>
+              <button type="button" className="text-sm text-blue-600" onClick={addChild}>
+                + 자녀 추가
+              </button>
+            </div>
+            {children.length === 0 && (
+              <p className="text-sm text-zinc-500">등록된 자녀가 없습니다.</p>
+            )}
+            {children.map((c, i) => (
+              <div key={i} className="flex items-end gap-2 rounded border p-3">
+                <Field label="구분">
+                  <select
+                    className={inputCls}
+                    value={c.status}
+                    onChange={(e) =>
+                      setChild(i, { status: e.target.value as Child["status"] })
+                    }
+                  >
+                    {childStatusEnum.options.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="생년월일 (임신은 비움)">
+                  <input
+                    type="date"
+                    className={inputCls}
+                    value={c.birthDate ?? ""}
+                    onChange={(e) => setChild(i, { birthDate: dateOrNull(e.target.value) })}
+                  />
+                </Field>
+                <button
+                  type="button"
+                  className="pb-1 text-sm text-red-600"
+                  onClick={() => removeChild(i)}
+                >
+                  삭제
+                </button>
+              </div>
+            ))}
+            {errors?.children && (
+              <p className="text-xs text-red-600">
+                자녀 정보를 확인해주세요. 임신이 아니면 생년월일을 입력해야 합니다.
+              </p>
+            )}
+          </>
+        )}
       </section>
 
       <section className="flex flex-col gap-3">
@@ -325,14 +370,16 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
             onChange={(e) => set({ applicantIncome: numOrUndef(e.target.value) })}
           />
         </Field>
-        <Field label="배우자 월소득 (원, 없으면 비움)" error={errors?.spouseIncome}>
-          <input
-            type="number"
-            className={inputCls}
-            value={state.spouseIncome ?? ""}
-            onChange={(e) => set({ spouseIncome: numOrNull(e.target.value) })}
-          />
-        </Field>
+        {isMarried && (
+          <Field label="배우자 월소득 (원, 없으면 비움)" error={errors?.spouseIncome}>
+            <input
+              type="number"
+              className={inputCls}
+              value={state.spouseIncome ?? ""}
+              onChange={(e) => set({ spouseIncome: numOrNull(e.target.value) })}
+            />
+          </Field>
+        )}
         <Field label="부동산 자산 (원, 없으면 비움)" error={errors?.realEstateAsset}>
           <input
             type="number"
@@ -358,39 +405,48 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
           checked={!!state.hasAccount}
           onChange={(v) => set({ hasAccount: v })}
         />
-        <Field label="청약통장 가입일" error={errors?.accountOpenDate}>
-          <input
-            type="date"
-            className={inputCls}
-            value={state.accountOpenDate ?? ""}
-            onChange={(e) => set({ accountOpenDate: dateOrNull(e.target.value) })}
-          />
-        </Field>
-        <Field label="예치금액 (원)" error={errors?.depositAmount}>
-          <input
-            type="number"
-            className={inputCls}
-            value={state.depositAmount ?? ""}
-            onChange={(e) => set({ depositAmount: numOrUndef(e.target.value) })}
-          />
-        </Field>
+        {state.hasAccount && (
+          <>
+            <Field label="청약통장 가입일" error={errors?.accountOpenDate}>
+              <input
+                type="date"
+                className={inputCls}
+                value={state.accountOpenDate ?? ""}
+                onChange={(e) => set({ accountOpenDate: dateOrNull(e.target.value) })}
+              />
+            </Field>
+            <Field label="예치금액 (원)" error={errors?.depositAmount}>
+              <input
+                type="number"
+                className={inputCls}
+                value={state.depositAmount ?? ""}
+                onChange={(e) => set({ depositAmount: numOrUndef(e.target.value) })}
+              />
+            </Field>
+          </>
+        )}
       </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-base font-semibold">주택 · 이력</h2>
-        <Field label="무주택 시작일 (없으면 비움)" error={errors?.homelessSince}>
-          <input
-            type="date"
-            className={inputCls}
-            value={state.homelessSince ?? ""}
-            onChange={(e) => set({ homelessSince: dateOrNull(e.target.value) })}
-          />
-        </Field>
         <Check
           label="과거 주택을 소유한 적이 있습니까?"
           checked={!!state.everOwnedHome}
           onChange={(v) => set({ everOwnedHome: v })}
         />
+        {state.everOwnedHome && (
+          <Field
+            label="무주택 시작일 (주택 처분일, 아직 보유 중이면 비움)"
+            error={errors?.homelessSince}
+          >
+            <input
+              type="date"
+              className={inputCls}
+              value={state.homelessSince ?? ""}
+              onChange={(e) => set({ homelessSince: dateOrNull(e.target.value) })}
+            />
+          </Field>
+        )}
         <Check
           label="과거 청약 당첨 이력이 있습니까?"
           checked={pastWin !== null}
@@ -413,6 +469,9 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
               checked={pastWin.regulated}
               onChange={(v) => set({ pastWin: { ...pastWin, regulated: v } })}
             />
+            {errors?.pastWin && (
+              <p className="text-xs text-red-600">당첨일을 입력해주세요.</p>
+            )}
           </div>
         )}
         <Check
@@ -431,11 +490,7 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
           {pending ? "저장 중…" : "저장"}
         </button>
         {saved && <span className="text-sm text-green-600">저장되었습니다.</span>}
-        {errors && (
-          <span className="text-sm text-red-600">
-            입력값을 확인해주세요.
-          </span>
-        )}
+        {message && <span className="text-sm text-red-600">{message}</span>}
       </div>
     </form>
   );
