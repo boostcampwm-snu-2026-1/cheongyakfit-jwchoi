@@ -5,6 +5,11 @@ import { saveProfile } from "./actions";
 
 vi.mock("./actions", () => ({ saveProfile: vi.fn(async () => ({ ok: true })) }));
 
+const push = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push, refresh: vi.fn() }),
+}));
+
 const mockSave = saveProfile as Mock;
 
 describe("ProfileForm", () => {
@@ -21,11 +26,12 @@ describe("ProfileForm", () => {
     ).toBe("서울특별시");
   });
 
-  it("성공 시 저장 안내를 보여준다", async () => {
+  it("성공 시 내 프로필 화면으로 이동한다", async () => {
+    push.mockClear();
     mockSave.mockResolvedValueOnce({ ok: true });
     render(<ProfileForm initial={null} />);
     fireEvent.click(screen.getByRole("button", { name: /저장/ }));
-    expect(await screen.findByText("저장되었습니다.")).toBeInTheDocument();
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/profile"));
   });
 
   it("서버가 message를 주면 화면에 그대로 보여준다", async () => {
