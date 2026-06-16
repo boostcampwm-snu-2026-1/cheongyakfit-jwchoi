@@ -8,7 +8,7 @@ export async function parseNoticePdf(pdf: Buffer, filename: string): Promise<Not
   const dataUrl = `data:application/pdf;base64,${pdf.toString("base64")}`;
   const run = async () => {
     const res = await client.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o-mini",
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: EXTRACTION_PROMPT },
