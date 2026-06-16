@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/server/auth/session";
-import { uploadNoticePdf } from "@/lib/server/storage/notices";
+import {
+  uploadNoticePdf,
+  deleteNotice as removeNotice,
+} from "@/lib/server/storage/notices";
 import { runAnalysis } from "./[id]/actions";
 
 export type UploadNoticeState =
@@ -26,6 +29,13 @@ export async function uploadNotice(
   const { noticeId } = await uploadNoticePdf(user.id, file);
   revalidatePath("/notices");
   return { ok: true, noticeId };
+}
+
+// 공고 삭제 — 본인 행만(RLS) 지우고 분석 결과는 cascade로 함께 삭제, PDF도 정리.
+export async function deleteNotice(noticeId: string): Promise<void> {
+  const user = await requireUser();
+  await removeNotice(user.id, noticeId);
+  revalidatePath("/notices");
 }
 
 export type AnalyzeNoticeState =
