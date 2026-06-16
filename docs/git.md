@@ -1,8 +1,8 @@
 # Git 전략 (Git Strategy)
 
-청약핏의 **브랜치·커밋·PR·이슈** 운영 규칙. task는 GitHub Issue로 관리하고, 모든 코드는 **PR + Squash and Merge**로만 통합한다. (범위·Phase는 [scope.md](./scope.md), 결정 근거는 [decisions.md](./decisions.md) D14, 작업 규율은 [CLAUDE.md](../CLAUDE.md))
+청약핏의 **브랜치·커밋·PR·이슈** 운영 규칙. task는 GitHub Issue로 관리하고, 모든 코드는 **PR로만** 통합한다(기능 PR은 Squash, 릴리스 PR은 Merge commit — §4). (범위·Phase는 [scope.md](./scope.md), 결정 근거는 [decisions.md](./decisions.md) D14, 작업 규율은 [CLAUDE.md](../CLAUDE.md))
 
-> 한 줄 요약: **이슈로 시작 → `dev`에서 작업 브랜치 분기 → PR로 `dev`에 Squash 머지 → 묶어서 `dev`→`main` 릴리스.**
+> 한 줄 요약: **이슈로 시작 → `dev`에서 작업 브랜치 분기 → PR로 `dev`에 Squash 머지 → 묶어서 `dev`→`main` Merge 커밋으로 릴리스.**
 
 ---
 
@@ -17,7 +17,7 @@
 흐름:
 
 ```
-작업 브랜치 (feat/12-...)  ──PR(squash)──▶  dev  ──PR(squash, 릴리스)──▶  main
+작업 브랜치 (feat/12-...)  ──PR(squash)──▶  dev  ──PR(merge commit, 릴리스)──▶  main
         ▲ dev에서 분기                                                    │
         └──────────────────── (다음 작업도 항상 최신 dev에서) ◀───────────┘
 ```
@@ -77,17 +77,18 @@ docs/7-domain-eligibility
 
 ## 4. 병합 전략
 
-**규칙: 모든 통합은 PR로만. 병합 버튼은 항상 "Squash and Merge".**
+**규칙: 모든 통합은 PR로만. 기능 PR은 "Squash and Merge", 릴리스 PR은 "Create a merge commit".**
 
-- **Squash 커밋 메시지 = PR 제목**을 conventional 형식으로 쓴다 → `main`/`dev` 히스토리가 "이슈 한 줄 = 커밋 한 줄"로 깔끔하게 유지된다.
+- **Squash 커밋 메시지 = PR 제목**을 conventional 형식으로 쓴다 → `dev` 히스토리가 "이슈 한 줄 = 커밋 한 줄"로 깔끔하게 유지된다.
 - 머지 후 작업 브랜치는 **삭제**한다.
+- **릴리스 PR(`dev`→`main`)만 Merge commit**으로 한다(Squash 금지). `dev`는 오래 사는 통합 브랜치라 Squash하면 `main`이 `dev`와 커밋 히스토리를 공유하지 못해 매 릴리스마다 갈라진다(다음 릴리스 PR이 지저분해짐). Merge commit은 `dev`의 기능 커밋을 그대로 보존하고 릴리스 시점만 표시한다.
 
 두 종류의 PR:
 
 | PR              | 방향        | 제목 예시                              | 비고                                   |
 | --------------- | ----------- | -------------------------------------- | -------------------------------------- |
 | **기능 PR**     | 작업 → `dev`| `feat: 자격 매칭 엔진 (#12)`           | 이슈 1개 = PR 1개 기본. `Closes #12`   |
-| **릴리스 PR**   | `dev` → `main`| `release: Phase 2 매칭 엔진`         | 여러 기능을 묶어 한 번에 `main`으로     |
+| **릴리스 PR**   | `dev` → `main`| `release: Phase 2 매칭 엔진`         | 여러 기능을 묶어 한 번에. **Merge commit**(Squash 금지 — 갈라짐 방지) |
 
 **핫픽스** (운영 중 긴급 수정):
 
