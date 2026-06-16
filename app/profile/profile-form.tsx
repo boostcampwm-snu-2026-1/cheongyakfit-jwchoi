@@ -7,6 +7,18 @@ import {
   cloneElement,
   type ReactElement,
 } from "react";
+import {
+  UserRound,
+  Users,
+  HeartHandshake,
+  Wallet,
+  Landmark,
+  History,
+  Plus,
+  Trash2,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 import type { Profile } from "@/lib/schemas/profile";
 import {
   SIDO,
@@ -14,12 +26,57 @@ import {
   relationEnum,
   childStatusEnum,
 } from "@/lib/schemas/enums";
+import { Button } from "@/components/ui/button";
 import { saveProfile } from "./actions";
 
 type HouseholdMember = Profile["household"][number];
 type Child = Profile["children"][number];
 
-const inputCls = "rounded border px-2 py-1";
+function Section({
+  icon: Icon,
+  title,
+  action,
+  children,
+}: {
+  icon: typeof UserRound;
+  title: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-line bg-surface p-5 shadow-card sm:p-6">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2.5 text-base font-bold tracking-tight text-ink">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+            <Icon className="h-4.5 w-4.5" />
+          </span>
+          {title}
+        </h2>
+        {action}
+      </div>
+      <div className="flex flex-col gap-3.5">{children}</div>
+    </section>
+  );
+}
+
+function AddButton({
+  onClick,
+  children,
+}: {
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 transition-colors hover:bg-brand-100"
+    >
+      <Plus className="h-3.5 w-3.5" />
+      {children}
+    </button>
+  );
+}
 
 function Field({
   label,
@@ -32,12 +89,17 @@ function Field({
 }) {
   const id = useId();
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-sm font-medium">
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-sm font-semibold text-ink-soft">
         {label}
       </label>
       {cloneElement(children, { id })}
-      {error && <span className="text-xs text-red-600">{error[0]}</span>}
+      {error && (
+        <span className="flex items-center gap-1 text-xs font-medium text-warn-fg">
+          <AlertCircle className="h-3 w-3" />
+          {error[0]}
+        </span>
+      )}
     </div>
   );
 }
@@ -52,13 +114,13 @@ function Check({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <label className="flex items-center gap-2">
+    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-line bg-surface px-3.5 py-3 transition-colors hover:border-brand-300 has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50">
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
       />
-      <span className="text-sm">{label}</span>
+      <span className="text-sm font-medium text-ink">{label}</span>
     </label>
   );
 }
@@ -147,13 +209,12 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
   };
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-8">
-      <section className="flex flex-col gap-3">
-        <h2 className="text-base font-semibold">기본 · 세대</h2>
+    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <Section icon={UserRound} title="기본 · 세대">
         <Field label="생년월일" error={errors?.birthDate}>
           <input
             type="date"
-            className={inputCls}
+            className="field"
             value={state.birthDate ?? ""}
             onChange={(e) => set({ birthDate: e.target.value })}
           />
@@ -165,7 +226,7 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
         />
         <Field label="거주 시·도" error={errors?.residenceSido}>
           <select
-            className={inputCls}
+            className="field"
             value={state.residenceSido ?? ""}
             onChange={(e) =>
               set({ residenceSido: e.target.value as Profile["residenceSido"] })
@@ -184,38 +245,39 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
         <Field label="현 거주지 전입일" error={errors?.residenceSince}>
           <input
             type="date"
-            className={inputCls}
+            className="field"
             value={state.residenceSince ?? ""}
             onChange={(e) => set({ residenceSince: dateOrNull(e.target.value) })}
           />
         </Field>
-      </section>
+      </Section>
 
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">세대원</h2>
-          <button type="button" className="text-sm text-blue-600" onClick={addMember}>
-            + 세대원 추가
-          </button>
-        </div>
+      <Section
+        icon={Users}
+        title="세대원"
+        action={<AddButton onClick={addMember}>세대원 추가</AddButton>}
+      >
         {household.length === 0 && (
-          <p className="text-sm text-zinc-500">등록된 세대원이 없습니다.</p>
+          <p className="rounded-xl border border-dashed border-line-strong bg-canvas/40 px-4 py-5 text-center text-sm text-muted">
+            등록된 세대원이 없습니다.
+          </p>
         )}
         {household.map((m, i) => (
-          <div key={i} className="flex flex-col gap-2 rounded border p-3">
+          <div key={i} className="flex flex-col gap-3 rounded-xl border border-line bg-canvas/40 p-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">세대원 {i + 1}</span>
+              <span className="text-sm font-bold text-ink-soft">세대원 {i + 1}</span>
               <button
                 type="button"
-                className="text-sm text-red-600"
+                className="inline-flex items-center gap-1 text-xs font-medium text-muted transition-colors hover:text-warn-fg"
                 onClick={() => removeMember(i)}
               >
+                <Trash2 className="h-3.5 w-3.5" />
                 삭제
               </button>
             </div>
             <Field label="관계">
               <select
-                className={inputCls}
+                className="field"
                 value={m.relation}
                 onChange={(e) =>
                   setMember(i, { relation: e.target.value as HouseholdMember["relation"] })
@@ -231,7 +293,7 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
             <Field label="생년월일">
               <input
                 type="date"
-                className={inputCls}
+                className="field"
                 value={m.birthDate}
                 onChange={(e) => setMember(i, { birthDate: e.target.value })}
               />
@@ -249,7 +311,7 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
             <Field label="동일세대 전입일">
               <input
                 type="date"
-                className={inputCls}
+                className="field"
                 value={m.coResidentSince ?? ""}
                 onChange={(e) =>
                   setMember(i, { coResidentSince: dateOrNull(e.target.value) })
@@ -259,17 +321,16 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
           </div>
         ))}
         {errors?.household && (
-          <p className="text-xs text-red-600">
+          <p className="text-xs font-medium text-warn-fg">
             세대원 정보를 확인해주세요. 생년월일은 모두 입력해야 합니다.
           </p>
         )}
-      </section>
+      </Section>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-base font-semibold">혼인 · 자녀</h2>
+      <Section icon={HeartHandshake} title="혼인 · 자녀">
         <Field label="혼인 상태" error={errors?.maritalStatus}>
           <select
-            className={inputCls}
+            className="field"
             value={state.maritalStatus ?? ""}
             onChange={(e) =>
               set({ maritalStatus: e.target.value as Profile["maritalStatus"] })
@@ -290,7 +351,7 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
             <Field label="혼인신고일" error={errors?.marriageDate}>
               <input
                 type="date"
-                className={inputCls}
+                className="field"
                 value={state.marriageDate ?? ""}
                 onChange={(e) => set({ marriageDate: dateOrNull(e.target.value) })}
               />
@@ -300,20 +361,20 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
               checked={!!state.isDualIncome}
               onChange={(v) => set({ isDualIncome: v })}
             />
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">자녀</span>
-              <button type="button" className="text-sm text-blue-600" onClick={addChild}>
-                + 자녀 추가
-              </button>
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-sm font-bold text-ink-soft">자녀</span>
+              <AddButton onClick={addChild}>자녀 추가</AddButton>
             </div>
             {children.length === 0 && (
-              <p className="text-sm text-zinc-500">등록된 자녀가 없습니다.</p>
+              <p className="rounded-xl border border-dashed border-line-strong bg-canvas/40 px-4 py-5 text-center text-sm text-muted">
+                등록된 자녀가 없습니다.
+              </p>
             )}
             {children.map((c, i) => (
-              <div key={i} className="flex items-end gap-2 rounded border p-3">
+              <div key={i} className="flex items-end gap-2.5 rounded-xl border border-line bg-canvas/40 p-4">
                 <Field label="구분">
                   <select
-                    className={inputCls}
+                    className="field"
                     value={c.status}
                     onChange={(e) =>
                       setChild(i, { status: e.target.value as Child["status"] })
@@ -329,35 +390,35 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
                 <Field label="생년월일 (임신은 비움)">
                   <input
                     type="date"
-                    className={inputCls}
+                    className="field"
                     value={c.birthDate ?? ""}
                     onChange={(e) => setChild(i, { birthDate: dateOrNull(e.target.value) })}
                   />
                 </Field>
                 <button
                   type="button"
-                  className="pb-1 text-sm text-red-600"
+                  className="mb-1.5 inline-flex items-center text-muted transition-colors hover:text-warn-fg"
                   onClick={() => removeChild(i)}
+                  aria-label="자녀 삭제"
                 >
-                  삭제
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             ))}
             {errors?.children && (
-              <p className="text-xs text-red-600">
+              <p className="text-xs font-medium text-warn-fg">
                 자녀 정보를 확인해주세요. 임신이 아니면 생년월일을 입력해야 합니다.
               </p>
             )}
           </>
         )}
-      </section>
+      </Section>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-base font-semibold">소득 · 자산</h2>
+      <Section icon={Wallet} title="소득 · 자산">
         <Field label="세대 구성원 수" error={errors?.householdSize}>
           <input
             type="number"
-            className={inputCls}
+            className="field"
             value={state.householdSize ?? ""}
             onChange={(e) => set({ householdSize: numOrUndef(e.target.value) })}
           />
@@ -365,7 +426,7 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
         <Field label="본인 월소득 (원)" error={errors?.applicantIncome}>
           <input
             type="number"
-            className={inputCls}
+            className="field"
             value={state.applicantIncome ?? ""}
             onChange={(e) => set({ applicantIncome: numOrUndef(e.target.value) })}
           />
@@ -374,7 +435,7 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
           <Field label="배우자 월소득 (원, 없으면 비움)" error={errors?.spouseIncome}>
             <input
               type="number"
-              className={inputCls}
+              className="field"
               value={state.spouseIncome ?? ""}
               onChange={(e) => set({ spouseIncome: numOrNull(e.target.value) })}
             />
@@ -383,7 +444,7 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
         <Field label="부동산 자산 (원, 없으면 비움)" error={errors?.realEstateAsset}>
           <input
             type="number"
-            className={inputCls}
+            className="field"
             value={state.realEstateAsset ?? ""}
             onChange={(e) => set({ realEstateAsset: numOrNull(e.target.value) })}
           />
@@ -391,15 +452,14 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
         <Field label="소득세 납부 연수 (없으면 비움)" error={errors?.incomeTaxPaidYears}>
           <input
             type="number"
-            className={inputCls}
+            className="field"
             value={state.incomeTaxPaidYears ?? ""}
             onChange={(e) => set({ incomeTaxPaidYears: numOrNull(e.target.value) })}
           />
         </Field>
-      </section>
+      </Section>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-base font-semibold">청약통장</h2>
+      <Section icon={Landmark} title="청약통장">
         <Check
           label="청약통장이 있습니까?"
           checked={!!state.hasAccount}
@@ -410,7 +470,7 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
             <Field label="청약통장 가입일" error={errors?.accountOpenDate}>
               <input
                 type="date"
-                className={inputCls}
+                className="field"
                 value={state.accountOpenDate ?? ""}
                 onChange={(e) => set({ accountOpenDate: dateOrNull(e.target.value) })}
               />
@@ -418,17 +478,16 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
             <Field label="예치금액 (원)" error={errors?.depositAmount}>
               <input
                 type="number"
-                className={inputCls}
+                className="field"
                 value={state.depositAmount ?? ""}
                 onChange={(e) => set({ depositAmount: numOrUndef(e.target.value) })}
               />
             </Field>
           </>
         )}
-      </section>
+      </Section>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-base font-semibold">주택 · 이력</h2>
+      <Section icon={History} title="주택 · 이력">
         <Check
           label="과거 주택을 소유한 적이 있습니까?"
           checked={!!state.everOwnedHome}
@@ -441,7 +500,7 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
           >
             <input
               type="date"
-              className={inputCls}
+              className="field"
               value={state.homelessSince ?? ""}
               onChange={(e) => set({ homelessSince: dateOrNull(e.target.value) })}
             />
@@ -455,11 +514,11 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
           }
         />
         {pastWin !== null && (
-          <div className="ml-6 flex flex-col gap-2">
+          <div className="ml-1 flex flex-col gap-3 rounded-xl border border-line bg-canvas/40 p-4">
             <Field label="당첨일">
               <input
                 type="date"
-                className={inputCls}
+                className="field"
                 value={pastWin.date}
                 onChange={(e) => set({ pastWin: { ...pastWin, date: e.target.value } })}
               />
@@ -470,7 +529,7 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
               onChange={(v) => set({ pastWin: { ...pastWin, regulated: v } })}
             />
             {errors?.pastWin && (
-              <p className="text-xs text-red-600">당첨일을 입력해주세요.</p>
+              <p className="text-xs font-medium text-warn-fg">당첨일을 입력해주세요.</p>
             )}
           </div>
         )}
@@ -479,18 +538,24 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
           checked={!!state.usedSpecialSupply}
           onChange={(v) => set({ usedSpecialSupply: v })}
         />
-      </section>
+      </Section>
 
-      <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-md bg-black px-5 py-2.5 font-medium text-white disabled:opacity-50"
-        >
+      <div className="sticky bottom-4 z-10 flex items-center gap-3 rounded-2xl border border-line bg-surface/90 px-5 py-3.5 shadow-lift backdrop-blur">
+        <Button type="submit" disabled={pending}>
           {pending ? "저장 중…" : "저장"}
-        </button>
-        {saved && <span className="text-sm text-green-600">저장되었습니다.</span>}
-        {message && <span className="text-sm text-red-600">{message}</span>}
+        </Button>
+        {saved && (
+          <span className="flex items-center gap-1.5 text-sm font-medium text-ok-fg">
+            <CheckCircle2 className="h-4 w-4" />
+            저장되었습니다.
+          </span>
+        )}
+        {message && (
+          <span className="flex items-center gap-1.5 text-sm font-medium text-warn-fg">
+            <AlertCircle className="h-4 w-4" />
+            {message}
+          </span>
+        )}
       </div>
     </form>
   );

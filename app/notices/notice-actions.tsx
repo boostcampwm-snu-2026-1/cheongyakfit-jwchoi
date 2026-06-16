@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Loader2, ArrowRight, ScanSearch, RotateCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // 상태별 액션: uploaded/failed → 파싱 트리거(POST), parsing → 진행 표시, parsed → 결과 링크.
 export function NoticeActions({ id, status }: { id: string; status: string }) {
@@ -20,19 +22,36 @@ export function NoticeActions({ id, status }: { id: string; status: string }) {
   }
 
   if (status === "parsing" || busy)
-    return <span className="text-xs text-zinc-500">분석 중…</span>;
+    return (
+      <span className="flex items-center gap-1.5 px-2 text-xs font-medium text-brand-600">
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        분석 중…
+      </span>
+    );
+
   if (status === "parsed")
     return (
-      <Link href={`/notices/${id}`} className="text-xs font-medium text-zinc-900 underline">
-        분석 결과
+      <Link href={`/notices/${id}`}>
+        <Button size="sm">
+          분석 결과
+          <ArrowRight className="h-4 w-4" />
+        </Button>
       </Link>
     );
+
   return (
-    <button
-      onClick={parse}
-      className="rounded bg-zinc-900 px-2 py-1 text-xs text-white"
-    >
-      {status === "failed" ? "다시 분석" : "분석하기"}
-    </button>
+    <Button variant="secondary" size="sm" onClick={parse}>
+      {status === "failed" ? (
+        <>
+          <RotateCw className="h-4 w-4" />
+          다시 분석
+        </>
+      ) : (
+        <>
+          <ScanSearch className="h-4 w-4" />
+          분석하기
+        </>
+      )}
+    </Button>
   );
 }
