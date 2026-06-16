@@ -41,3 +41,20 @@ test("파생값 = example.md §2", () => {
   expect(d.householdHomeless).toBe(true);
   expect(d.grossIncome).toBe(8500000);
 });
+
+// 보유 이력 없음(everOwnedHome=false)이면 폼이 homelessSince를 null로 둔다.
+// 평생 무주택 = 가장 명백한 무주택자이므로 무주택으로 판정돼야 한다.
+test("평생 무주택(보유 이력 없음·처분일 없음)도 무주택", () => {
+  const d = derive({ ...profile, everOwnedHome: false, homelessSince: null }, REF);
+  expect(d.householdHomeless).toBe(true);
+  // 무주택기간 시작 = max(만30세 2022-03-01, 혼인 2022-05-01) → REF까지 50개월
+  expect(d.homelessMonths).toBe(50);
+});
+
+test("만30세 미만 평생 무주택은 무주택기간 0(음수 아님)", () => {
+  const d = derive(
+    { ...profile, birthDate: "2001-01-01", marriageDate: null, everOwnedHome: false, homelessSince: null },
+    REF, // 만25세 → 만30세 도달일이 미래
+  );
+  expect(d.homelessMonths).toBe(0);
+});
