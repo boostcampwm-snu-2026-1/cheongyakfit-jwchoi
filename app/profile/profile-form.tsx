@@ -7,6 +7,7 @@ import {
   cloneElement,
   type ReactElement,
 } from "react";
+import { useRouter } from "next/navigation";
 import {
   UserRound,
   Users,
@@ -137,6 +138,7 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
   const [message, setMessage] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
+  const router = useRouter();
 
   const household = state.household ?? [];
   const children = state.children ?? [];
@@ -194,6 +196,8 @@ export default function ProfileForm({ initial }: { initial: Profile | null }) {
           setErrors(undefined);
           setMessage(null);
           setSaved(true);
+          router.push("/profile");
+          router.refresh();
         } else if (res.errors) {
           setErrors(res.errors);
           setMessage("입력값을 확인해주세요.");
