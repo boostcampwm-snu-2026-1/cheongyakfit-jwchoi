@@ -28,6 +28,16 @@ export async function uploadNoticePdf(userId: string, file: File) {
   return { noticeId, path };
 }
 
+// 공고 1건을 삭제한다. 행을 먼저 지우면 analyses는 FK on delete cascade로 함께 사라진다.
+// (RLS로 본인 행만 삭제됨.) PDF는 cascade되지 않으므로 행 삭제 후 best-effort로 정리한다 —
+// 객체 제거가 실패해도 고아 객체만 남을 뿐(무해), 사용자에게는 이미 사라진 것으로 보인다.
+export async function deleteNotice(userId: string, noticeId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("notices").delete().eq("id", noticeId);
+  if (error) throw error;
+  await supabase.storage.from("notice-pdfs").remove([`${userId}/${noticeId}.pdf`]);
+}
+
 export async function listNotices(userId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase

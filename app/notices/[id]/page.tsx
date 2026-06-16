@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { SummaryCard } from "./summary-card";
 import { VerdictCard } from "./verdict-card";
 import EditForm from "./edit-form";
+import { DeleteNoticeButton } from "../delete-notice-button";
 import { runAnalysis } from "./actions";
 
 const SUPPLY: Record<string, { label: string; desc: string }> = {
@@ -69,12 +70,15 @@ export default async function NoticePage({
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-8 sm:px-6">
-      <Link
-        href="/notices"
-        className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-brand-700"
-      >
-        <ArrowLeft className="h-4 w-4" />내 공고
-      </Link>
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <Link
+          href="/notices"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-brand-700"
+        >
+          <ArrowLeft className="h-4 w-4" />내 공고
+        </Link>
+        <DeleteNoticeButton noticeId={id} redirectTo="/notices" withLabel />
+      </div>
 
       {/* ── 상단: 공고 요약 ─────────────────────────── */}
       <SummaryCard e={e} />

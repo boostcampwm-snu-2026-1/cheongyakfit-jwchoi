@@ -16,7 +16,7 @@ vi.mock("@/lib/server/auth/server-client", () => ({
   createClient: async () => userClient,
 }));
 
-const { uploadNoticePdf, listNotices } = await import("./notices");
+const { uploadNoticePdf, listNotices, deleteNotice } = await import("./notices");
 
 const pdfFile = () =>
   new File([new Uint8Array([0x25, 0x50, 0x44, 0x46])], "공고.pdf", {
@@ -67,5 +67,18 @@ describe.skipIf(!hasDb)("storage notices: 업로드→목록 왕복", () => {
       original_filename: "공고.pdf",
       status: "uploaded",
     });
+  });
+
+  it("삭제하면 notices 행과 Storage 객체가 사라진다", async () => {
+    const { noticeId } = await uploadNoticePdf(userId, pdfFile());
+    await deleteNotice(userId, noticeId);
+
+    const notices = await listNotices(userId);
+    expect(notices?.some((n) => n.id === noticeId)).toBe(false);
+
+    const { data: objects } = await userClient!.storage
+      .from("notice-pdfs")
+      .list(userId);
+    expect(objects?.some((o) => o.name === `${noticeId}.pdf`)).toBe(false);
   });
 });
